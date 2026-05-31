@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IconPicker } from './components/IconPicker';
-import { renderIcon, getIconEmoji, SPACE_PRESETS, STORAGE_PRESETS } from './utils/iconHelper';
+import type { ImportedIcon } from './components/IconPicker';
+import { renderIcon, getIconEmoji } from './utils/iconHelper';
 
 interface MockItem {
   id: string;
@@ -10,7 +11,32 @@ interface MockItem {
 }
 
 export default function App() {
-  const [selectedIcon, setSelectedIcon] = useState<string>('Home');
+  const [importedIcons, setImportedIcons] = useState<ImportedIcon[]>(() => {
+    const saved = localStorage.getItem('whereisit_imported_icons');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.error('Failed to parse imported icons', e);
+      }
+    }
+    return [];
+  });
+
+  const [selectedIcon, setSelectedIcon] = useState<string>(() => {
+    const saved = localStorage.getItem('whereisit_imported_icons');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed[0].name;
+        }
+      } catch (e) {}
+    }
+    return '';
+  });
+
   const [itemName, setItemName] = useState<string>('');
   const [itemType, setItemType] = useState<'space' | 'storage'>('space');
   const [createdItems, setCreatedItems] = useState<MockItem[]>([
@@ -21,29 +47,11 @@ export default function App() {
   ]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // 아이콘 피커에서 선택한 아이콘에 대응하여, 기본 생성 예시 이름을 어울리게 세팅해주는 위트있는 편의기능
+  // 로컬 스토리지 및 전역 메모리 캐시 연동 동기화
   useEffect(() => {
-    if (!itemName) {
-      if (selectedIcon === 'Home') setItemName('우리집');
-      else if (selectedIcon === 'Sofa') setItemName('거실 소파');
-      else if (selectedIcon === 'ChefHat') setItemName('주방 요리대');
-      else if (selectedIcon === 'BedDouble') setItemName('안방 침대');
-      else if (selectedIcon === 'Boxes') setItemName('베란다 물품상자');
-      else if (selectedIcon === 'Cabinet') setItemName('안방 서랍장');
-      else if (selectedIcon === 'Wrench') setItemName('다용도실 공구 수납함');
-      else if (selectedIcon === 'Pill') setItemName('상비약 보관함');
-    }
-  }, [selectedIcon]);
-
-  // 피커 타입 탭과 폼의 타입 싱크 조절
-  useEffect(() => {
-    // 디폴트 매칭 보정
-    if (itemType === 'space' && !SPACE_PRESETS.includes(selectedIcon as any)) {
-      setSelectedIcon('Home');
-    } else if (itemType === 'storage' && !STORAGE_PRESETS.includes(selectedIcon as any)) {
-      setSelectedIcon('Boxes');
-    }
-  }, [itemType]);
+    localStorage.setItem('whereisit_imported_icons', JSON.stringify(importedIcons));
+    (window as any).__importedIconsCache = importedIcons;
+  }, [importedIcons]);
 
   const handleCreateItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,16 +83,18 @@ export default function App() {
       <header className="app-header">
         <div className="app-title-badge">
           {renderIcon('Sparkles', { size: 10, strokeWidth: 3 })}
-          WhereIsIt Tech Validation
+          WhereIsIt Custom Icon Manager
         </div>
-        <h1 className="app-title">Lucide React 아이콘 피커</h1>
-        <p className="app-subtitle">모바일-퍼스트 프리미엄 1-2단계 생성기 검증 데모</p>
+        <h1 className="app-title">나만의 커스텀 아이콘 매니저</h1>
+        <p className="app-subtitle">100% 사용자 이미지/SVG 업로드 및 실시간 선택박스 연동</p>
       </header>
 
       {/* 메인 아이콘 피커 컴포넌트 */}
       <IconPicker
         selectedIcon={selectedIcon}
         onSelectIcon={setSelectedIcon}
+        importedIcons={importedIcons}
+        setImportedIcons={setImportedIcons}
       />
 
       {/* 폼 및 하이브리드 시뮬레이터 패널 */}
@@ -138,39 +148,23 @@ export default function App() {
               DB 저장용 하이브리드 선택 박스 (표준 select)
             </label>
             <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>
-              ※ option 태그 내부는 SVG가 불가하므로 이모지로 자동 변환(Fallback) 렌더링됩니다.
+              ※ 이미지를 업로드하면 이 선택 박스 목록에 실시간으로 추가됩니다.
             </p>
             <select
               id="hybrid-select-box"
               className="sim-select"
               value={selectedIcon}
               onChange={(e) => setSelectedIcon(e.target.value)}
+              disabled={importedIcons.length === 0}
             >
-              {/* 공간 프리셋 옵션 */}
-              <optgroup label="공간 추천 목록 (이모지 폴백)">
-                {SPACE_PRESETS.map((name) => (
-                  <option key={`opt-space-${name}`} value={name}>
-                    {getIconEmoji(name)} {name}
+              {importedIcons.length === 0 ? (
+                <option value="">⚠️ 아이콘을 먼저 업로드하세요</option>
+              ) : (
+                importedIcons.map((icon) => (
+                  <option key={`opt-${icon.name}`} value={icon.name}>
+                    {getIconEmoji(icon.name)} {icon.name}
                   </option>
-                ))}
-              </optgroup>
-              
-              {/* 수납처 프리셋 옵션 */}
-              <optgroup label="수납처 추천 목록 (이모지 폴백)">
-                {STORAGE_PRESETS.map((name) => (
-                  <option key={`opt-storage-${name}`} value={name}>
-                    {getIconEmoji(name)} {name}
-                  </option>
-                ))}
-              </optgroup>
-
-              {/* 검색해서 선택한 임의의 아이콘이 위 목록에 없을 때를 대비한 동적 옵션 추가 */}
-              {!SPACE_PRESETS.includes(selectedIcon as any) && !STORAGE_PRESETS.includes(selectedIcon as any) && (
-                <optgroup label="검색한 커스텀 아이콘">
-                  <option value={selectedIcon}>
-                    {getIconEmoji(selectedIcon)} {selectedIcon} (검색됨)
-                  </option>
-                </optgroup>
+                ))
               )}
             </select>
           </div>
@@ -178,7 +172,7 @@ export default function App() {
           {/* 실시간 프리뷰 카드 디스플레이 */}
           <div className="sim-preview-display">
             <div className="sim-preview-icon-container">
-              {renderIcon(selectedIcon, { size: 24, strokeWidth: 2.5 })}
+              {selectedIcon ? renderIcon(selectedIcon, { size: 24, strokeWidth: 2.5 }) : renderIcon('HelpCircle', { size: 24, strokeWidth: 2.5 })}
             </div>
             <div className="sim-preview-details">
               <span className="sim-preview-title">
@@ -186,7 +180,7 @@ export default function App() {
               </span>
               <span className="sim-preview-subtitle">
                 {renderIcon(itemType === 'space' ? 'Home' : 'Boxes', { size: 12 })}
-                {itemType === 'space' ? '공간' : '수납처'} · 이모지 폴백: {getIconEmoji(selectedIcon)}
+                {itemType === 'space' ? '공간' : '수납처'} · 이모지 폴백: {selectedIcon ? getIconEmoji(selectedIcon) : '❓'}
               </span>
             </div>
           </div>
@@ -246,7 +240,7 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '14px', fontWeight: '600' }}>{item.name}</span>
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                    {item.type === 'space' ? '1단계 공간' : '2단계 수납처'} · Lucide: {item.iconName}
+                    {item.type === 'space' ? '1단계 공간' : '2단계 수납처'} · 아이콘: {item.iconName}
                   </span>
                 </div>
               </div>
