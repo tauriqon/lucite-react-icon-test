@@ -177,13 +177,30 @@ export function getIconEmoji(iconName: string): string {
   const lowerName = iconName.toLowerCase();
 
   const rules: { keywords: string[]; emoji: string }[] = [
-    // 고유 매칭 우선순위가 높고 구체적인 카테고리들 우선 배치
+    // 1단계: 가장 구체적인 특정 음식/디저트/음료 매칭 (최우선 순위)
+    { keywords: ['cookie', 'biscuit'], emoji: '🍪' },
+    { keywords: ['pizza'], emoji: '🍕' },
+    { keywords: ['salad', 'cabbage', 'lettuce'], emoji: '🥗' },
+    { keywords: ['cake', 'cupcake', 'dessert', 'sweet'], emoji: '🍰' },
+    { keywords: ['croissant', 'sandwich', 'bread', 'bakery', 'toast'], emoji: '🍞' },
+    { keywords: ['apple'], emoji: '🍎' },
+    { keywords: ['banana'], emoji: '🍌' },
+    { keywords: ['carrot', 'vegetable'], emoji: '🥕' },
+    { keywords: ['icecream', 'ice-cream'], emoji: '🍦' },
+    { keywords: ['beer', 'ale', 'pub'], emoji: '🍺' },
+    { keywords: ['coffee', 'mug', 'espresso', 'tea'], emoji: '☕' },
+    { keywords: ['wine', 'champagne', 'cocktail'], emoji: '🍷' },
+
+    // 2단계: 주방 용기 및 찌개/스프류 (CookingPot -> 🍲 매칭용)
+    { keywords: ['soup', 'pot', 'stew', 'bowl', 'cookingpot', 'ramen', 'noodle', 'curry'], emoji: '🍲' },
+    { keywords: ['pan', 'cook', 'chef', 'utensil', 'spoon', 'fork', 'knife', 'utensilscrossed', 'recipe', 'flame', 'fire'], emoji: '🍳' },
+
+    // 3단계: 기타 일반적인 카테고리 매핑
     { keywords: ['heart', 'love', 'like'], emoji: '❤️' },
     { keywords: ['pill', 'capsule', 'medicine', 'drug', 'tablet', 'medical', 'hospital', 'stethoscope', 'bandage', 'clinic'], emoji: '💊' },
     { keywords: ['wrench', 'hammer', 'screwdriver', 'pliers', 'drill', 'spanner', 'tool', 'bolt', 'nut', 'screw'], emoji: '🛠️' },
     { keywords: ['sofa', 'couch', 'chair', 'seat', 'armchair', 'furniture', 'table', 'desk'], emoji: '🛋️' },
     { keywords: ['home', 'house', 'building', 'warehouse', 'tent', 'cottage', 'castle', 'door'], emoji: '🏠' },
-    { keywords: ['soup', 'bowl', 'eat', 'cook', 'chef', 'utensil', 'spoon', 'fork', 'knife', 'flame', 'fire'], emoji: '🍳' },
     { keywords: ['box', 'boxes', 'package', 'pack', 'container', 'archive', 'cabinet', 'drawer'], emoji: '📦' },
     { keywords: ['hanger', 'shirt', 'dress', 'coat', 'wear', 'cloth', 'tshirt'], emoji: '👕' },
     { keywords: ['laptop', 'computer', 'pc', 'keyboard', 'mouse', 'monitor', 'screen'], emoji: '💻' },
@@ -193,7 +210,6 @@ export function getIconEmoji(iconName: string): string {
     { keywords: ['sprout', 'seed', 'plant', 'leaf', 'flower', 'tree', 'garden', 'grass'], emoji: '🌱' },
     { keywords: ['car', 'vehicle', 'truck', 'bus', 'auto'], emoji: '🚗' },
     { keywords: ['dumbbell', 'gym', 'weight', 'workout', 'fit', 'train'], emoji: '🏋️' },
-    { keywords: ['wine', 'beer', 'cocktail', 'glass', 'drink', 'beverage', 'cup', 'mug', 'soda'], emoji: '🍷' },
     { keywords: ['paint', 'brush', 'color', 'palette', 'art', 'draw'], emoji: '🎨' },
     { keywords: ['refrigerator', 'snowflake', 'ice', 'cold', 'freezer'], emoji: '🧊' },
     { keywords: ['film', 'video', 'movie', 'cinema', 'tv', 'camera', 'photo'], emoji: '📺' },
