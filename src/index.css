@@ -606,3 +606,53 @@ body {
     background: hsl(140, 70%, 25%);
   }
 }
+
+/* Custom Imported SVG CSS Normalization (Toss Premium Alignment) */
+.dynamic-svg-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-secondary);
+  transition: var(--transition-bounce);
+}
+
+.dynamic-svg-container svg {
+  width: 100% !important;
+  height: 100% !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.icon-item.selected .dynamic-svg-container {
+  color: var(--toss-blue);
+  transform: scale(1.15);
+}
+
+/* File and textarea custom form fields */
+textarea.search-input {
+  border-radius: var(--radius-sm);
+  line-height: 1.5;
+}
+
+input[type="file"]::file-selector-button {
+  background: var(--toss-blue);
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 10px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: var(--transition-smooth);
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--toss-blue-hover);
+}

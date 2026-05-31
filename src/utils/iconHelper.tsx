@@ -210,6 +210,23 @@ export function renderIcon(
   iconName: string,
   props: CustomIconProps = {}
 ): React.ReactNode {
+  // 1. 글로벌 메모리 캐시에서 가져온 커스텀 아이콘이 있는지 확인
+  const cache = (window as any).__importedIconsCache;
+  if (Array.isArray(cache)) {
+    const found = cache.find((icon: any) => icon.name === iconName);
+    if (found) {
+      const size = props.size || 20;
+      return (
+        <div
+          className="dynamic-svg-container"
+          style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          dangerouslySetInnerHTML={{ __html: found.svgCode }}
+        />
+      );
+    }
+  }
+
+  // 2. 기성 프리셋 아이콘인 경우
   return <CustomIcon name={iconName} {...props} />;
 }
 
