@@ -44,7 +44,7 @@ const IconCard = React.memo<{
 
 IconCard.displayName = 'IconCard';
 
-// 가져온 커스텀 SVG 카드 컴포넌트
+// 가져온 커스텀 SVG/PNG 카드 컴포넌트
 const ImportedIconCard = React.memo<{
   name: string;
   svgCode: string;
@@ -55,6 +55,8 @@ const ImportedIconCard = React.memo<{
     onClick(name);
   }, [name, onClick]);
 
+  const isBase64Image = svgCode.startsWith('data:image/');
+
   return (
     <div
       className={`icon-item ${isSelected ? 'selected' : ''}`}
@@ -63,11 +65,20 @@ const ImportedIconCard = React.memo<{
       aria-label={`Select custom icon ${name}`}
       title={name}
     >
-      {/* CSS Normalization을 위해 클래스를 부여하여 24px 크기 및 색상 강제 상속 */}
-      <div
-        className="icon-item-graphic dynamic-svg-container"
-        dangerouslySetInnerHTML={{ __html: svgCode }}
-      />
+      <div className="icon-item-graphic dynamic-svg-container">
+        {isBase64Image ? (
+          <img
+            src={svgCode}
+            alt={name}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
+          />
+        ) : (
+          <div
+            style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            dangerouslySetInnerHTML={{ __html: svgCode }}
+          />
+        )}
+      </div>
       <span className="icon-item-label">{name}</span>
     </div>
   );
@@ -103,36 +114,49 @@ export const IconPicker: React.FC<IconPickerProps> = ({
     onSelectIcon(name);
   }, [onSelectIcon]);
 
-  // SVG 파일 업로드 핸들러
+  // SVG/PNG/JPG/WEBP 파일 업로드 핸들러
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'image/svg+xml' && !file.name.endsWith('.svg')) {
-      setErrorMsg('확장자가 .svg인 파일만 업로드할 수 있습니다.');
+    const isSvg = file.type === 'image/svg+xml' || file.name.endsWith('.svg');
+    const isImage = file.type.startsWith('image/') && !isSvg;
+
+    if (!isSvg && !isImage) {
+      setErrorMsg('지원하지 않는 파일 형식입니다. .svg, .png, .jpg, .jpeg, .webp 파일만 업로드 가능합니다.');
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (text) {
-        // 간이 태그 검증
-        if (!text.trim().toLowerCase().startsWith('<svg')) {
-          setErrorMsg('유효한 SVG 코드가 아닙니다. <svg> 태그로 시작해야 합니다.');
-          return;
+      const textOrData = event.target?.result as string;
+      if (textOrData) {
+        if (isSvg) {
+          if (!textOrData.trim().toLowerCase().startsWith('<svg')) {
+            setErrorMsg('유효한 SVG 코드가 아닙니다. <svg> 태그로 시작해야 합니다.');
+            return;
+          }
+          setCustomSvg(textOrData);
+        } else {
+          // PNG/JPG/WEBP인 경우 base64 data URL 저장
+          setCustomSvg(textOrData);
         }
-        setCustomSvg(text);
+        
         // 파일 기본명을 아이콘 이름으로 제안 (PascalCase화)
         const baseName = file.name
-          .replace('.svg', '')
+          .replace(/\.(svg|png|jpg|jpeg|webp)$/i, '')
           .replace(/[^a-zA-Z0-9가-힣]/g, '');
         const capitalizedName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
         setCustomName(capitalizedName);
         setErrorMsg('');
       }
     };
-    reader.readAsText(file);
+
+    if (isSvg) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsDataURL(file);
+    }
   };
 
   // 아이콘 가져오기(Import) 제출 처리
@@ -162,12 +186,15 @@ export const IconPicker: React.FC<IconPickerProps> = ({
     }
 
     if (!trimmedSvg) {
-      setErrorMsg('SVG 코드를 입력하거나 파일을 업로드해 주세요.');
+      setErrorMsg('SVG 코드를 입력하거나 이미지를 업로드해 주세요.');
       return;
     }
 
-    if (!trimmedSvg.toLowerCase().includes('<svg') || !trimmedSvg.toLowerCase().includes('</svg>')) {
-      setErrorMsg('유효한 SVG 코드 구조가 아닙니다. <svg>...</svg> 태그 형태여야 합니다.');
+    const isBase64 = trimmedSvg.startsWith('data:image/');
+    const isValidSvg = trimmedSvg.toLowerCase().includes('<svg') && trimmedSvg.toLowerCase().includes('</svg>');
+
+    if (!isBase64 && !isValidSvg) {
+      setErrorMsg('유효한 SVG 코드 구조 또는 이미지 파일이 아닙니다.');
       return;
     }
 
@@ -273,7 +300,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".svg"
+                accept=".svg,.png,.jpg,.jpeg,.webp"
                 onChange={handleFileUpload}
                 style={{
                   fontSize: '11px',

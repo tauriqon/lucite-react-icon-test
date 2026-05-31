@@ -216,12 +216,25 @@ export function renderIcon(
     const found = cache.find((icon: any) => icon.name === iconName);
     if (found) {
       const size = props.size || 20;
+      const isBase64Image = found.svgCode.startsWith('data:image/');
       return (
         <div
           className="dynamic-svg-container"
           style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          dangerouslySetInnerHTML={{ __html: found.svgCode }}
-        />
+        >
+          {isBase64Image ? (
+            <img
+              src={found.svgCode}
+              alt={iconName}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
+            />
+          ) : (
+            <div
+              style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              dangerouslySetInnerHTML={{ __html: found.svgCode }}
+            />
+          )}
+        </div>
       );
     }
   }
