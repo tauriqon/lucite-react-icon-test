@@ -164,7 +164,7 @@ const DEFAULT_EMOJI = '📦';
 export function getIconEmoji(iconName: string): string {
   if (!iconName) return DEFAULT_EMOJI;
   
-  // 대소문자 매칭을 더 유연하게 처리하기 위해 보정
+  // 1단계: EMOJI_MAP에 정의된 1:1 완벽한 매칭이 있을 경우 우선 반환
   const normalizedKey = Object.keys(EMOJI_MAP).find(
     (key) => key.toLowerCase() === iconName.toLowerCase()
   );
@@ -173,21 +173,68 @@ export function getIconEmoji(iconName: string): string {
     return EMOJI_MAP[normalizedKey];
   }
   
-  // 일반적인 키워드 포함 기반 폴백 매핑
+  // 2단계: 일반적인 키워드 포함 기반 폴백 매핑 (지능형 다중 키워드 룰셋 적용)
   const lowerName = iconName.toLowerCase();
-  if (lowerName.includes('home') || lowerName.includes('house')) return '🏠';
-  if (lowerName.includes('box') || lowerName.includes('pack')) return '📦';
-  if (lowerName.includes('tool') || lowerName.includes('hammer') || lowerName.includes('wrench')) return '🛠️';
-  if (lowerName.includes('book') || lowerName.includes('read')) return '📚';
-  if (lowerName.includes('food') || lowerName.includes('cook') || lowerName.includes('chef') || lowerName.includes('eat')) return '🍳';
-  if (lowerName.includes('car') || lowerName.includes('vehicle')) return '🚗';
-  if (lowerName.includes('shirt') || lowerName.includes('tshirt') || lowerName.includes('cloth') || lowerName.includes('hanger')) return '👕';
-  if (lowerName.includes('card') || lowerName.includes('wallet') || lowerName.includes('pay')) return '💳';
-  if (lowerName.includes('user') || lowerName.includes('profile') || lowerName.includes('avatar')) return '👤';
-  if (lowerName.includes('settings') || lowerName.includes('gear')) return '⚙️';
-  if (lowerName.includes('lock') || lowerName.includes('key')) return '🔒';
-  if (lowerName.includes('star') || lowerName.includes('gold')) return '⭐';
-  if (lowerName.includes('heart') || lowerName.includes('love')) return '❤️';
+
+  const rules: { keywords: string[]; emoji: string }[] = [
+    // 고유 매칭 우선순위가 높고 구체적인 카테고리들 우선 배치
+    { keywords: ['heart', 'love', 'like'], emoji: '❤️' },
+    { keywords: ['pill', 'capsule', 'medicine', 'drug', 'tablet', 'medical', 'hospital', 'stethoscope', 'bandage', 'clinic'], emoji: '💊' },
+    { keywords: ['wrench', 'hammer', 'screwdriver', 'pliers', 'drill', 'spanner', 'tool', 'bolt', 'nut', 'screw'], emoji: '🛠️' },
+    { keywords: ['sofa', 'couch', 'chair', 'seat', 'armchair', 'furniture', 'table', 'desk'], emoji: '🛋️' },
+    { keywords: ['home', 'house', 'building', 'warehouse', 'tent', 'cottage', 'castle', 'door'], emoji: '🏠' },
+    { keywords: ['soup', 'bowl', 'eat', 'cook', 'chef', 'utensil', 'spoon', 'fork', 'knife', 'flame', 'fire'], emoji: '🍳' },
+    { keywords: ['box', 'boxes', 'package', 'pack', 'container', 'archive', 'cabinet', 'drawer'], emoji: '📦' },
+    { keywords: ['hanger', 'shirt', 'dress', 'coat', 'wear', 'cloth', 'tshirt'], emoji: '👕' },
+    { keywords: ['laptop', 'computer', 'pc', 'keyboard', 'mouse', 'monitor', 'screen'], emoji: '💻' },
+    { keywords: ['book', 'library', 'notebook', 'read', 'pencil', 'pen', 'ruler', 'eraser'], emoji: '📚' },
+    { keywords: ['bath', 'shower', 'tub', 'soap', 'toilet'], emoji: '🛁' },
+    { keywords: ['wash', 'laundry', 'dryer', 'washing'], emoji: '🧺' },
+    { keywords: ['sprout', 'seed', 'plant', 'leaf', 'flower', 'tree', 'garden', 'grass'], emoji: '🌱' },
+    { keywords: ['car', 'vehicle', 'truck', 'bus', 'auto'], emoji: '🚗' },
+    { keywords: ['dumbbell', 'gym', 'weight', 'workout', 'fit', 'train'], emoji: '🏋️' },
+    { keywords: ['wine', 'beer', 'cocktail', 'glass', 'drink', 'beverage', 'cup', 'mug', 'soda'], emoji: '🍷' },
+    { keywords: ['paint', 'brush', 'color', 'palette', 'art', 'draw'], emoji: '🎨' },
+    { keywords: ['refrigerator', 'snowflake', 'ice', 'cold', 'freezer'], emoji: '🧊' },
+    { keywords: ['film', 'video', 'movie', 'cinema', 'tv', 'camera', 'photo'], emoji: '📺' },
+    { keywords: ['compass', 'navigate', 'direction', 'map', 'pin', 'gps', 'location'], emoji: '🧭' },
+    { keywords: ['gift', 'present', 'reward', 'prize', 'trophy', 'medal'], emoji: '🎁' },
+    { keywords: ['gem', 'diamond', 'jewel', 'stone', 'crystal', 'crown', 'gold'], emoji: '💎' },
+    { keywords: ['key', 'lock', 'unlock', 'shield', 'secure', 'guard', 'safe'], emoji: '🔑' },
+    { keywords: ['cable', 'plug', 'power', 'electric', 'wire', 'usb', 'charge', 'battery'], emoji: '🔌' },
+    { keywords: ['sparkle', 'star', 'shiny', 'glow', 'sun', 'moon', 'light'], emoji: '✨' },
+    { keywords: ['phone', 'smartphone', 'mobile', 'call', 'cell'], emoji: '📱' },
+    { keywords: ['mail', 'envelope', 'letter', 'send'], emoji: '✉️' },
+    { keywords: ['clock', 'time', 'watch', 'timer', 'hourglass', 'calendar', 'date'], emoji: '⏰' },
+    { keywords: ['cloud', 'rain', 'snow', 'wind', 'weather'], emoji: '☁️' },
+    { keywords: ['trash', 'delete', 'bin', 'garbage', 'waste'], emoji: '🗑️' },
+    { keywords: ['wallet', 'purse', 'money', 'cash', 'coin', 'banknote', 'dollar', 'creditcard', 'pay'], emoji: '💳' },
+    { keywords: ['search', 'zoom', 'find', 'magnify'], emoji: '🔍' },
+    { keywords: ['settings', 'gear', 'config', 'setup'], emoji: '⚙️' },
+    { keywords: ['user', 'profile', 'avatar', 'person', 'people', 'human', 'member'], emoji: '👤' },
+    { keywords: ['smile', 'happy', 'laugh', 'emoji', 'face', 'frown', 'sad', 'angry'], emoji: '😊' },
+    { keywords: ['scissors', 'cut', 'snip'], emoji: '✂️' },
+    { keywords: ['target', 'aim', 'focus', 'goal'], emoji: '🎯' },
+    { keywords: ['ticket', 'pass', 'coupon'], emoji: '🎟️' },
+    { keywords: ['trophy', 'winner'], emoji: '🏆' },
+    { keywords: ['umbrella'], emoji: '☂️' },
+    { keywords: ['calculator'], emoji: '🧮' },
+    { keywords: ['database', 'server', 'storage'], emoji: '🗄️' },
+    { keywords: ['mic', 'microphone', 'voice', 'record'], emoji: '🎙️' },
+    { keywords: ['crown', 'queen', 'king', 'royal'], emoji: '👑' },
+    { keywords: ['footprint', 'foot', 'steps', 'walk', 'paw', 'dog', 'cat', 'pet', 'animal'], emoji: '🐾' },
+    { keywords: ['plane', 'flight', 'airport', 'rocket', 'space'], emoji: '✈️' },
+    { keywords: ['fish', 'shell', 'shrimp', 'crab', 'marine'], emoji: '🐟' },
+    { keywords: ['tag', 'label', 'price'], emoji: '🏷️' },
+    { keywords: ['circle', 'square', 'triangle', 'shape'], emoji: '⭕' },
+  ];
+
+  // 규칙 순회하면서 키워드가 부분 포함되어 있으면 해당 이모지 즉시 반환
+  for (const rule of rules) {
+    if (rule.keywords.some((keyword) => lowerName.includes(keyword))) {
+      return rule.emoji;
+    }
+  }
 
   return DEFAULT_EMOJI;
 }
