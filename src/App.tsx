@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IconPicker } from './components/IconPicker';
 import type { ImportedIcon } from './components/IconPicker';
+import { CustomSelect } from './components/CustomSelect';
 import { renderIcon, getIconEmoji } from './utils/iconHelper';
 
 interface MockItem {
@@ -142,31 +143,20 @@ export default function App() {
             />
           </div>
 
-          {/* REQUIREMENT ①: 표준 HTML <select> 내 유니코드 이모지 폴백 시뮬레이션 */}
+          {/* REQUIREMENT ①: 업로드한 실제 아이콘 이미지가 렌더링되는 프리미엄 커스텀 선택 박스 */}
           <div className="sim-form-group">
             <label className="sim-label" htmlFor="hybrid-select-box">
-              DB 저장용 하이브리드 선택 박스 (표준 select)
+              나만의 업로드 아이콘 선택 박스 (Custom Select)
             </label>
-            <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>
-              ※ 이미지를 업로드하면 이 선택 박스 목록에 실시간으로 추가됩니다.
+            <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '6px' }}>
+              ※ 이미지를 업로드하면 아래의 커스텀 선택 박스 옵션에 실제 그래픽으로 즉시 편입됩니다.
             </p>
-            <select
-              id="hybrid-select-box"
-              className="sim-select"
-              value={selectedIcon}
-              onChange={(e) => setSelectedIcon(e.target.value)}
+            <CustomSelect
+              importedIcons={importedIcons}
+              selectedIcon={selectedIcon}
+              onSelectIcon={setSelectedIcon}
               disabled={importedIcons.length === 0}
-            >
-              {importedIcons.length === 0 ? (
-                <option value="">⚠️ 아이콘을 먼저 업로드하세요</option>
-              ) : (
-                importedIcons.map((icon) => (
-                  <option key={`opt-${icon.name}`} value={icon.name}>
-                    {getIconEmoji(icon.name)} {icon.name}
-                  </option>
-                ))
-              )}
-            </select>
+            />
           </div>
 
           {/* 실시간 프리뷰 카드 디스플레이 */}
@@ -180,7 +170,7 @@ export default function App() {
               </span>
               <span className="sim-preview-subtitle">
                 {renderIcon(itemType === 'space' ? 'Home' : 'Boxes', { size: 12 })}
-                {itemType === 'space' ? '공간' : '수납처'} · 이모지 폴백: {selectedIcon ? getIconEmoji(selectedIcon) : '❓'}
+                {itemType === 'space' ? '공간' : '수납처'} · 등록 아이콘: {selectedIcon || '선택 없음'}
               </span>
             </div>
           </div>
