@@ -17,6 +17,7 @@ export default function App() {
     { id: '1', name: '거실 소파 앞', type: 'space', iconName: 'Sofa' },
     { id: '2', name: '공구함 A', type: 'storage', iconName: 'Wrench' },
     { id: '3', name: '구급상자', type: 'storage', iconName: 'Pill' },
+    { id: '4', name: '안방 서랍장', type: 'storage', iconName: 'Cabinet' },
   ]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -28,7 +29,7 @@ export default function App() {
       else if (selectedIcon === 'ChefHat') setItemName('주방 요리대');
       else if (selectedIcon === 'BedDouble') setItemName('안방 침대');
       else if (selectedIcon === 'Boxes') setItemName('베란다 물품상자');
-      else if (selectedIcon === 'Cabinet') setItemName('서재 서류함');
+      else if (selectedIcon === 'Cabinet') setItemName('안방 서랍장');
       else if (selectedIcon === 'Wrench') setItemName('다용도실 공구 수납함');
       else if (selectedIcon === 'Pill') setItemName('상비약 보관함');
     }
