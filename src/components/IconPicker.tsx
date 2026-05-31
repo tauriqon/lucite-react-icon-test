@@ -5,6 +5,7 @@ import {
   SEARCH_INDEX,
   renderIcon,
   getIconEmoji,
+  translateKoreanToEnglish,
 } from '../utils/iconHelper';
 
 interface IconPickerProps {
@@ -62,19 +63,39 @@ export const IconPicker: React.FC<IconPickerProps> = ({
   };
 
   // 1,000개 이상의 아이콘 전체 리스트 필터링 연산 최적화 (useMemo + 캐시 인덱스)
+  // 한글 입력시 영문 키워드로 자동 번역하여 매핑 매칭 지원 (Toss Premium UX)
   // 최대 48개로 제한하여 모바일 가상 돔 크래시 원천 차단
   const filteredIcons = useMemo(() => {
     const trimmed = searchQuery.trim().toLowerCase();
     if (!trimmed) return [];
 
+    const hasKorean = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(trimmed);
     const matches: string[] = [];
-    for (let i = 0; i < SEARCH_INDEX.length; i++) {
-      const item = SEARCH_INDEX[i];
-      if (item.lowerName.includes(trimmed)) {
-        matches.push(item.originalName);
-        if (matches.length >= 48) break; // 최대 48개 노드 제한
+
+    if (hasKorean) {
+      const englishKeywords = translateKoreanToEnglish(trimmed);
+      if (englishKeywords.length === 0) return []; // 매칭되는 한글 키워드가 없을 때
+
+      for (let i = 0; i < SEARCH_INDEX.length; i++) {
+        const item = SEARCH_INDEX[i];
+        // 한글 매핑에 등록된 영문 키워드 중 하나라도 아이콘 이름에 포함되어 있으면 매치
+        const isMatched = englishKeywords.some((keyword) => item.lowerName.includes(keyword));
+        if (isMatched) {
+          matches.push(item.originalName);
+          if (matches.length >= 48) break; // 최대 48개 노드 제한
+        }
+      }
+    } else {
+      // 일반 영문 검색
+      for (let i = 0; i < SEARCH_INDEX.length; i++) {
+        const item = SEARCH_INDEX[i];
+        if (item.lowerName.includes(trimmed)) {
+          matches.push(item.originalName);
+          if (matches.length >= 48) break; // 최대 48개 노드 제한
+        }
       }
     }
+    
     return matches;
   }, [searchQuery]);
 
@@ -91,7 +112,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
             ref={inputRef}
             type="text"
             className="search-input"
-            placeholder="Search icons in English (e.g. tv, sofa, tool)"
+            placeholder="Search icons in Kor/Eng (예: 집, 소파, box, tv)"
             value={searchQuery}
             onChange={handleSearchChange}
             autoComplete="off"
